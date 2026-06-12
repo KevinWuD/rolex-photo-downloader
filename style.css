@@ -130,7 +130,7 @@ h1 {
 
 .thumbs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
@@ -189,6 +189,16 @@ h1 {
   gap: 8px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.option360-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option360-label {
+  font-size: 14px;
 }
 
 #n360Label { color: #999; font-size: 12px; }

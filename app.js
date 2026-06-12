@@ -27,7 +27,6 @@ const els = {
   detailTitle: document.getElementById('detailTitle'),
   detailCase: document.getElementById('detailCase'),
   opt360Row: document.getElementById('opt360Row'),
-  opt360: document.getElementById('opt360'),
   n360Label: document.getElementById('n360Label'),
   downloadBtn: document.getElementById('downloadBtn'),
   progress: document.getElementById('progress'),
@@ -134,13 +133,12 @@ function selectVariant(v) {
     els.thumbs.appendChild(img);
   }
 
+  document.querySelector('input[name="opt360"][value="none"]').checked = true;
   if (v.has360) {
     els.opt360Row.classList.remove('hidden');
-    els.opt360.checked = false;
-    els.n360Label.textContent = `(${v.n360} frames, larger download)`;
+    els.n360Label.textContent = `(${v.n360} frames total)`;
   } else {
     els.opt360Row.classList.add('hidden');
-    els.opt360.checked = false;
   }
 
   resetProgress();
@@ -166,16 +164,27 @@ function buildJobs(v) {
     }
   }
 
-  if (v.has360 && els.opt360.checked) {
+  const mode360 = document.querySelector('input[name="opt360"]:checked').value;
+  if (v.has360 && mode360 !== 'none') {
     const key = `${v.case_id}-${v.bracelet_id}`;
-    for (let i = 0; i < v.n360; i++) {
-      const idx = String(i).padStart(3, '0');
+    const frames = mode360 === '64' ? sample64(v.n360) : range(v.n360);
+    for (const frame of frames) {
+      const idx = String(frame).padStart(3, '0');
       const path = `360/${key}/${key}--${idx}`;
       jobs.push({ url: frameUrl(path), zipPath: `360/${idx}.jpg` });
     }
   }
 
   return jobs;
+}
+
+function range(n) {
+  return Array.from({ length: n }, (_, i) => i);
+}
+
+// Evenly sample 64 frames across n360 (matches the original 360_64 turntable preview).
+function sample64(n360) {
+  return Array.from({ length: 64 }, (_, i) => Math.round((i * (n360 - 1)) / 63));
 }
 
 async function downloadSingle(v, name, path) {

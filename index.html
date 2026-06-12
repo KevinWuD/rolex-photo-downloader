@@ -52,10 +52,12 @@
                 ><input type="checkbox" id="optStatic" checked /> Static photos
                 (main, showcase, bezel, dial, shadow)</label
               >
-              <label class="option" id="opt360Row"
-                ><input type="checkbox" id="opt360" /> 360° turntable frames
-                <span id="n360Label"></span
-              ></label>
+              <div class="option360-group" id="opt360Row">
+                <span class="option360-label">360° turntable: <span id="n360Label"></span></span>
+                <label class="option"><input type="radio" name="opt360" value="none" checked> None</label>
+                <label class="option"><input type="radio" name="opt360" value="64"> 64 frames (sampled)</label>
+                <label class="option"><input type="radio" name="opt360" value="250"> All 250 frames</label>
+              </div>
             </div>
 
             <button id="downloadBtn" type="button">Download ZIP</button>
