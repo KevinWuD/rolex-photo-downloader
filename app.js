@@ -227,5 +227,6 @@ els.form.addEventListener('submit', onSearch);
 els.downloadBtn.addEventListener('click', onDownload);
 
 loadCatalog().then(() => {
-  els.status.textContent = `Ready — ${Object.keys(catalog).length} reference numbers loaded.`;
+  const total = Object.values(catalog).reduce((sum, list) => sum + list.length, 0);
+  els.status.textContent = `Ready — ${total} watches loaded.`;
 });
