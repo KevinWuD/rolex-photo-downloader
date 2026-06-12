@@ -2,6 +2,7 @@ const CDN = 'https://media.rolex.com/image/upload/q_auto:best/f_jpg';
 const HASH = 'a677b2c664f6';
 const STATIC_WIDTH = 2400;
 const FRAME_WIDTH = 1200;
+const THUMB_WIDTH = 300;
 
 // angle -> CDN path template (relative to catalogue/2026/, {rmc} placeholder)
 const ANGLES = {
@@ -23,6 +24,7 @@ const els = {
   variants: document.getElementById('variants'),
   detail: document.getElementById('detail'),
   previewImg: document.getElementById('previewImg'),
+  thumbs: document.getElementById('thumbs'),
   detailTitle: document.getElementById('detailTitle'),
   detailCase: document.getElementById('detailCase'),
   opt360Row: document.getElementById('opt360Row'),
@@ -96,6 +98,18 @@ function selectVariant(v) {
   els.previewImg.src = cdnUrl(ANGLES.main.replace('{rmc}', v.rmc), 600);
   els.detailTitle.textContent = `${v.family} — ${v.material}`;
   els.detailCase.textContent = `${v.case} · ${v.rmc}`;
+
+  els.thumbs.innerHTML = '';
+  for (const [name, template] of Object.entries(ANGLES)) {
+    if (name === 'main') continue;
+    const path = template.replace('{rmc}', v.rmc);
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.alt = name;
+    img.title = name;
+    img.src = cdnUrl(path, THUMB_WIDTH);
+    els.thumbs.appendChild(img);
+  }
 
   if (v.has360) {
     els.opt360Row.classList.remove('hidden');
