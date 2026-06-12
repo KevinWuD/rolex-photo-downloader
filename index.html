@@ -1,52 +1,77 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rolex Photo Downloader</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="wrap">
-    <h1>Rolex Photo Downloader</h1>
-    <p class="sub">Enter a reference number to download its catalog photos.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rolex Photo Downloader</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>Rolex Photo Downloader</h1>
+      <p class="sub">
+        Enter a reference number to download its catalog photos.
+      </p>
 
-    <form id="searchForm" class="search">
-      <input id="refInput" type="text" placeholder="e.g. 126610LN" autocomplete="off" spellcheck="false">
-      <button type="submit">Search</button>
-    </form>
+      <form id="searchForm" class="search">
+        <input
+          id="refInput"
+          type="text"
+          placeholder="e.g. 124060"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit">Search</button>
+      </form>
 
-    <div id="status" class="status"></div>
+      <div id="status" class="status"></div>
 
-    <div id="variants" class="variants hidden"></div>
+      <div id="variants" class="variants hidden"></div>
 
-    <section id="detail" class="detail hidden">
-      <div class="detail-grid">
-        <div class="preview-col">
-          <img id="previewImg" class="preview" alt="preview">
-          <div id="thumbs" class="thumbs"></div>
-        </div>
-        <div class="detail-info">
-          <h2 id="detailTitle"></h2>
-          <p id="detailCase"></p>
-
-          <div class="options">
-            <label class="option"><input type="checkbox" id="optStatic" checked> Static photos (main, luminescence, showcase, bezel, dial, shadow)</label>
-            <label class="option" id="opt360Row"><input type="checkbox" id="opt360"> 360° turntable frames <span id="n360Label"></span></label>
+      <section id="detail" class="detail hidden">
+        <div class="detail-grid">
+          <div class="preview-col">
+            <img id="previewImg" class="preview" alt="preview" />
+            <div id="thumbs" class="thumbs"></div>
+            <p class="hint">Click an image to download it individually.</p>
           </div>
+          <div class="detail-info">
+            <h2 id="detailTitle"></h2>
+            <p id="detailCase"></p>
 
-          <button id="downloadBtn" type="button">Download ZIP</button>
-          <div id="progress" class="progress hidden">
-            <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-            <div id="progressLabel" class="progress-label"></div>
+            <label class="option quality-row">
+              Quality:
+              <select id="quality">
+                <option value="web">Web (2400px JPG)</option>
+                <option value="original">Original (full-res PNG, transparent)</option>
+              </select>
+            </label>
+
+            <div class="options">
+              <label class="option"
+                ><input type="checkbox" id="optStatic" checked /> Static photos
+                (main, showcase, bezel, dial, shadow)</label
+              >
+              <label class="option" id="opt360Row"
+                ><input type="checkbox" id="opt360" /> 360° turntable frames
+                <span id="n360Label"></span
+              ></label>
+            </div>
+
+            <button id="downloadBtn" type="button">Download ZIP</button>
+            <div id="progress" class="progress hidden">
+              <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+              </div>
+              <div id="progressLabel" class="progress-label"></div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="app.js"></script>
-</body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

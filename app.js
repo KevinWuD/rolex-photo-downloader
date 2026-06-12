@@ -1,4 +1,4 @@
-const CDN = 'https://media.rolex.com/image/upload/q_auto:best/f_jpg';
+const CDN_BASE = 'https://media.rolex.com/image/upload';
 const HASH = 'a677b2c664f6';
 const STATIC_WIDTH = 2400;
 const FRAME_WIDTH = 1200;
@@ -7,7 +7,6 @@ const THUMB_WIDTH = 300;
 // angle -> CDN path template (relative to catalogue/2026/, {rmc} placeholder)
 const ANGLES = {
   main: 'upright-c/{rmc}',
-  luminescence: 'luminescence/{rmc}',
   upright_shadow: 'upright-bba-with-shadow/{rmc}',
   showcase: 'showcase/{rmc}',
   bezel: 'bezel-constant-size-with-shadow/{rmc}',
@@ -36,8 +35,28 @@ const els = {
   progressLabel: document.getElementById('progressLabel'),
 };
 
-function cdnUrl(path, width) {
-  return `${CDN}/c_limit,w_${width}/v1/${HASH}/catalogue/2026/${path}`;
+function thumbUrl(path) {
+  return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${THUMB_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
+}
+
+// quality: 'web' -> resized/compressed JPG, 'original' -> untouched source PNG (with alpha)
+function staticUrl(path, quality) {
+  if (quality === 'original') {
+    return `${CDN_BASE}/v1/${HASH}/catalogue/2026/${path}`;
+  }
+  return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${STATIC_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
+}
+
+function frameUrl(path) {
+  return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${FRAME_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
+}
+
+function staticExt(quality) {
+  return quality === 'original' ? 'png' : 'jpg';
+}
+
+function currentQuality() {
+  return document.getElementById('quality').value;
 }
 
 async function loadCatalog() {
@@ -95,7 +114,10 @@ function selectVariant(v) {
   els.variants.classList.add('hidden');
   els.detail.classList.remove('hidden');
 
-  els.previewImg.src = cdnUrl(ANGLES.main.replace('{rmc}', v.rmc), 600);
+  const mainPath = ANGLES.main.replace('{rmc}', v.rmc);
+  els.previewImg.src = thumbUrl(mainPath);
+  els.previewImg.title = 'main — click to download';
+  els.previewImg.onclick = () => downloadSingle(v, 'main', mainPath);
   els.detailTitle.textContent = `${v.family} — ${v.material}`;
   els.detailCase.textContent = `${v.case} · ${v.rmc}`;
 
@@ -106,8 +128,9 @@ function selectVariant(v) {
     const img = document.createElement('img');
     img.className = 'thumb';
     img.alt = name;
-    img.title = name;
-    img.src = cdnUrl(path, THUMB_WIDTH);
+    img.title = `${name} — click to download`;
+    img.src = thumbUrl(path);
+    img.addEventListener('click', () => downloadSingle(v, name, path));
     els.thumbs.appendChild(img);
   }
 
@@ -133,11 +156,13 @@ function resetProgress() {
 
 function buildJobs(v) {
   const jobs = [];
+  const quality = currentQuality();
+  const ext = staticExt(quality);
 
   if (document.getElementById('optStatic').checked) {
     for (const [name, template] of Object.entries(ANGLES)) {
       const path = template.replace('{rmc}', v.rmc);
-      jobs.push({ url: cdnUrl(path, STATIC_WIDTH), zipPath: `${name}.jpg` });
+      jobs.push({ url: staticUrl(path, quality), zipPath: `${name}.${ext}` });
     }
   }
 
@@ -146,11 +171,26 @@ function buildJobs(v) {
     for (let i = 0; i < v.n360; i++) {
       const idx = String(i).padStart(3, '0');
       const path = `360/${key}/${key}--${idx}`;
-      jobs.push({ url: cdnUrl(path, FRAME_WIDTH), zipPath: `360/${idx}.jpg` });
+      jobs.push({ url: frameUrl(path), zipPath: `360/${idx}.jpg` });
     }
   }
 
   return jobs;
+}
+
+async function downloadSingle(v, name, path) {
+  const quality = currentQuality();
+  const url = staticUrl(path, quality);
+  const ext = staticExt(quality);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    saveAs(blob, `${v.rmc}_${name}.${ext}`);
+  } catch (err) {
+    els.status.textContent = `Failed to download ${name}: ${err.message}`;
+    els.status.classList.add('error');
+  }
 }
 
 async function fetchWithLimit(jobs, concurrency, onProgress) {
