@@ -26,19 +26,74 @@ const els = {
   thumbs: document.getElementById('thumbs'),
   detailTitle: document.getElementById('detailTitle'),
   detailCase: document.getElementById('detailCase'),
-  opt360Row: document.getElementById('opt360Row'),
-  n360Label: document.getElementById('n360Label'),
+  specs: document.getElementById('specs'),
+  opt360Group: document.getElementById('opt360Group'),
   downloadBtn: document.getElementById('downloadBtn'),
   progress: document.getElementById('progress'),
   progressFill: document.getElementById('progressFill'),
   progressLabel: document.getElementById('progressLabel'),
 };
 
+const SPEC_SECTIONS = [
+  {
+    label: 'Case',
+    keys: ['case_diameter', 'case_material', 'bezel', 'water_resistance', 'crystal', 'crown'],
+  },
+  {
+    label: 'Movement',
+    keys: ['movement', 'calibre', 'certification', 'power_reserve', 'precision', 'functions', 'oscillator'],
+  },
+  { label: 'Dial',     keys: ['dial', 'dial_details'] },
+  { label: 'Bracelet', keys: ['bracelet', 'bracelet_material', 'clasp'] },
+];
+
+const SPEC_LABELS = {
+  case_diameter:     'Diameter',
+  case_material:     'Material',
+  bezel:             'Bezel',
+  water_resistance:  'Water resistance',
+  crystal:           'Crystal',
+  crown:             'Crown',
+  movement:          'Type',
+  calibre:           'Calibre',
+  certification:     'Certification',
+  power_reserve:     'Power reserve',
+  precision:         'Precision',
+  functions:         'Functions',
+  oscillator:        'Oscillator',
+  dial:              'Dial',
+  dial_details:      'Details',
+  bracelet:          'Bracelet',
+  bracelet_material: 'Material',
+  clasp:             'Clasp',
+};
+
+function renderSpecs(v) {
+  const s = v.specs;
+  if (!s || Object.keys(s).length === 0) {
+    els.specs.classList.add('hidden');
+    return;
+  }
+  let html = '';
+  for (const section of SPEC_SECTIONS) {
+    const rows = section.keys
+      .map(k => [SPEC_LABELS[k], s[k]])
+      .filter(([, val]) => val);
+    if (!rows.length) continue;
+    html += `<div class="specs-section"><div class="specs-heading">${section.label}</div>`;
+    for (const [label, val] of rows) {
+      html += `<div class="specs-row"><span class="specs-label">${label}</span><span class="specs-val">${val}</span></div>`;
+    }
+    html += '</div>';
+  }
+  els.specs.innerHTML = html;
+  els.specs.classList.remove('hidden');
+}
+
 function thumbUrl(path) {
   return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${THUMB_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
 }
 
-// quality: 'web' -> resized/compressed JPG, 'original' -> untouched source PNG (with alpha)
 function staticUrl(path, quality) {
   if (quality === 'original') {
     return `${CDN_BASE}/v1/${HASH}/catalogue/2026/${path}`;
@@ -48,14 +103,6 @@ function staticUrl(path, quality) {
 
 function frameUrl(path) {
   return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${FRAME_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
-}
-
-function staticExt(quality) {
-  return quality === 'original' ? 'png' : 'jpg';
-}
-
-function currentQuality() {
-  return document.getElementById('quality').value;
 }
 
 async function loadCatalog() {
@@ -96,11 +143,9 @@ function onSearch(e) {
     const card = document.createElement('div');
     card.className = 'variant-card';
     card.innerHTML = `
-      <div>
-        <div class="vtitle">${v.family} — ${v.material}</div>
-        <div class="vmeta">${v.case}</div>
-        <div class="vrmc">${v.rmc}</div>
-      </div>
+      <img class="vthumb" src="${thumbUrl(`upright-c/${v.rmc}`)}" alt="${v.rmc}" />
+      <span class="vtitle">${v.family}</span>
+      <span class="vrmc">${v.rmc}</span>
     `;
     card.addEventListener('click', () => selectVariant(v));
     els.variants.appendChild(card);
@@ -117,8 +162,9 @@ function selectVariant(v) {
   els.previewImg.src = thumbUrl(mainPath);
   els.previewImg.title = 'main — click to download';
   els.previewImg.onclick = () => downloadSingle(v, 'main', mainPath);
-  els.detailTitle.textContent = `${v.family} — ${v.material}`;
-  els.detailCase.textContent = `${v.case} · ${v.rmc}`;
+  els.detailTitle.textContent = v.family;
+  els.detailCase.textContent = v.rmc;
+  renderSpecs(v);
 
   els.thumbs.innerHTML = '';
   for (const [name, template] of Object.entries(ANGLES)) {
@@ -133,12 +179,12 @@ function selectVariant(v) {
     els.thumbs.appendChild(img);
   }
 
-  document.querySelector('input[name="opt360"][value="none"]').checked = true;
   if (v.has360) {
-    els.opt360Row.classList.remove('hidden');
-    els.n360Label.textContent = `(${v.n360} frames total)`;
+    els.opt360Group.classList.remove('hidden');
   } else {
-    els.opt360Row.classList.add('hidden');
+    els.opt360Group.classList.add('hidden');
+    document.getElementById('opt360_64').checked = false;
+    document.getElementById('opt360_250').checked = false;
   }
 
   resetProgress();
@@ -154,24 +200,34 @@ function resetProgress() {
 
 function buildJobs(v) {
   const jobs = [];
-  const quality = currentQuality();
-  const ext = staticExt(quality);
 
-  if (document.getElementById('optStatic').checked) {
+  if (document.getElementById('optStaticWeb').checked) {
     for (const [name, template] of Object.entries(ANGLES)) {
       const path = template.replace('{rmc}', v.rmc);
-      jobs.push({ url: staticUrl(path, quality), zipPath: `${name}.${ext}` });
+      jobs.push({ url: staticUrl(path, 'web'), zipPath: `web/${name}.jpg` });
     }
   }
 
-  const mode360 = document.querySelector('input[name="opt360"]:checked').value;
-  if (v.has360 && mode360 !== 'none') {
+  if (document.getElementById('optStaticOrig').checked) {
+    for (const [name, template] of Object.entries(ANGLES)) {
+      const path = template.replace('{rmc}', v.rmc);
+      jobs.push({ url: staticUrl(path, 'original'), zipPath: `original/${name}.png` });
+    }
+  }
+
+  if (v.has360 && document.getElementById('opt360_64').checked) {
     const key = `${v.case_id}-${v.bracelet_id}`;
-    const frames = mode360 === '64' ? sample64(v.n360) : range(v.n360);
-    for (const frame of frames) {
+    for (const frame of sample64(v.n360)) {
       const idx = String(frame).padStart(3, '0');
-      const path = `360/${key}/${key}--${idx}`;
-      jobs.push({ url: frameUrl(path), zipPath: `360/${idx}.jpg` });
+      jobs.push({ url: frameUrl(`360/${key}/${key}--${idx}`), zipPath: `360_64/${idx}.jpg` });
+    }
+  }
+
+  if (v.has360 && document.getElementById('opt360_250').checked) {
+    const key = `${v.case_id}-${v.bracelet_id}`;
+    for (const frame of range(v.n360)) {
+      const idx = String(frame).padStart(3, '0');
+      jobs.push({ url: frameUrl(`360/${key}/${key}--${idx}`), zipPath: `360_all/${idx}.jpg` });
     }
   }
 
@@ -188,14 +244,11 @@ function sample64(n360) {
 }
 
 async function downloadSingle(v, name, path) {
-  const quality = currentQuality();
-  const url = staticUrl(path, quality);
-  const ext = staticExt(quality);
   try {
-    const res = await fetch(url);
+    const res = await fetch(staticUrl(path, 'web'));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
-    saveAs(blob, `${v.rmc}_${name}.${ext}`);
+    saveAs(blob, `${v.rmc}_${name}.jpg`);
   } catch (err) {
     els.status.textContent = `Failed to download ${name}: ${err.message}`;
     els.status.classList.add('error');

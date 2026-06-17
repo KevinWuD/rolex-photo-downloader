@@ -36,27 +36,18 @@
             <p class="hint">Click an image to download it individually.</p>
           </div>
           <div class="detail-info">
-            <h2 id="detailTitle"></h2>
-            <p id="detailCase"></p>
+            <div class="title-row">
+              <h2 id="detailTitle"></h2>
+              <p id="detailCase"></p>
+            </div>
 
-            <label class="option quality-row">
-              Quality:
-              <select id="quality">
-                <option value="web">Web (2400px JPG)</option>
-                <option value="original">Original (full-res PNG, transparent)</option>
-              </select>
-            </label>
-
+            <p class="options-hint">Check all that apply then click download</p>
             <div class="options">
-              <label class="option"
-                ><input type="checkbox" id="optStatic" checked /> Static photos
-                (main, showcase, bezel, dial, shadow)</label
-              >
-              <div class="option360-group" id="opt360Row">
-                <span class="option360-label">360° turntable: <span id="n360Label"></span></span>
-                <label class="option"><input type="radio" name="opt360" value="none" checked> None</label>
-                <label class="option"><input type="radio" name="opt360" value="64"> 64 frames (sampled)</label>
-                <label class="option"><input type="radio" name="opt360" value="250"> All 250 frames</label>
+              <label class="option"><input type="checkbox" id="optStaticWeb" checked /> 5 Static — JPG</label>
+              <label class="option"><input type="checkbox" id="optStaticOrig" /> 5 Static — High quality PNG</label>
+              <div id="opt360Group" class="hidden">
+                <label class="option"><input type="checkbox" id="opt360_64" /> 360° — 64 frames</label>
+                <label class="option"><input type="checkbox" id="opt360_250" /> 360° — 250 frames</label>
               </div>
             </div>
 
@@ -67,6 +58,8 @@
               </div>
               <div id="progressLabel" class="progress-label"></div>
             </div>
+
+            <div id="specs" class="specs hidden"></div>
           </div>
         </div>
       </section>
