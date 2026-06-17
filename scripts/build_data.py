@@ -5,7 +5,7 @@ sys.path.insert(0, '/Users/kevin/Library/Python/3.9/lib/python/site-packages')
 from playwright.async_api import async_playwright
 
 CSV_IN = Path(__file__).resolve().parent.parent.parent / 'rolex_catalog.csv'
-OUT    = Path(__file__).resolve().parent.parent / 'data' / 'catalog.json'
+OUT    = Path(__file__).resolve().parent.parent / 'data' / 'rolex_catalog.json'
 
 N360        = 250
 RMC_RE      = re.compile(r'^m(.+)-(\d+)$')

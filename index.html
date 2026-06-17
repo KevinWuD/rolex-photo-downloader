@@ -3,15 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rolex Photo Downloader</title>
+    <title>Watch Photo Downloader</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body class="brand-rolex">
     <main class="wrap">
-      <h1>Rolex Photo Downloader</h1>
-      <p class="sub">
-        Enter a reference number to download its catalog photos.
-      </p>
+
+      <div class="tab-bar">
+        <button class="tab active" data-brand="rolex">Rolex</button>
+        <button class="tab" data-brand="breitling">Breitling</button>
+      </div>
 
       <form id="searchForm" class="search">
         <input
@@ -30,37 +31,49 @@
 
       <section id="detail" class="detail hidden">
         <div class="detail-grid">
-          <div class="preview-col">
+
+          <!-- Rolex: single preview + thumbs -->
+          <div class="preview-col rolex-only">
             <img id="previewImg" class="preview" alt="preview" />
             <div id="thumbs" class="thumbs"></div>
             <p class="hint">Click an image to download it individually.</p>
           </div>
+
+          <!-- Breitling: image grid -->
+          <div id="breitlingImages" class="breitling-images breitling-only"></div>
+
           <div class="detail-info">
             <div class="title-row">
               <h2 id="detailTitle"></h2>
               <p id="detailCase"></p>
             </div>
 
-            <p class="options-hint">Check all that apply then click download</p>
-            <div class="options">
-              <label class="option"><input type="checkbox" id="optStaticWeb" checked /> 5 Static — JPG</label>
-              <label class="option"><input type="checkbox" id="optStaticOrig" /> 5 Static — High quality PNG</label>
-              <div id="opt360Group" class="hidden">
-                <label class="option"><input type="checkbox" id="opt360_64" /> 360° — 64 frames</label>
-                <label class="option"><input type="checkbox" id="opt360_250" /> 360° — 250 frames</label>
+            <!-- Rolex: download options -->
+            <div class="rolex-only">
+              <p class="options-hint">Check all that apply then click download</p>
+              <div class="options">
+                <label class="option"><input type="checkbox" id="optStaticWeb" checked /> 5 Static — JPG</label>
+                <label class="option"><input type="checkbox" id="optStaticOrig" /> 5 Static — High quality PNG</label>
+                <div id="opt360Group" class="hidden">
+                  <label class="option"><input type="checkbox" id="opt360_64" /> 360° — 64 frames</label>
+                  <label class="option"><input type="checkbox" id="opt360_250" /> 360° — 250 frames</label>
+                </div>
+              </div>
+              <button id="downloadBtn" type="button">Download ZIP</button>
+              <div id="progress" class="progress hidden">
+                <div class="progress-bar">
+                  <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div id="progressLabel" class="progress-label"></div>
               </div>
             </div>
 
-            <button id="downloadBtn" type="button">Download ZIP</button>
-            <div id="progress" class="progress hidden">
-              <div class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
-              </div>
-              <div id="progressLabel" class="progress-label"></div>
-            </div>
+            <!-- Breitling: right-click hint -->
+            <p class="breitling-only breitling-hint">Right-click any image to save.</p>
 
             <div id="specs" class="specs hidden"></div>
           </div>
+
         </div>
       </section>
     </main>

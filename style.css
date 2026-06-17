@@ -10,19 +10,42 @@ body {
 .wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 20px 80px;
+  padding: 0 20px 80px;
 }
 
-h1 {
-  font-size: 28px;
-  margin: 0 0 4px;
-  letter-spacing: 0.5px;
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid #e5e5e5;
+  margin-bottom: 36px;
 }
 
-.sub {
-  color: #666;
-  margin: 0 0 28px;
+.tab {
+  flex: 1;
+  padding: 22px 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  color: #bbb;
+  transition: color 0.2s, border-color 0.2s;
 }
+
+.tab.active         { color: #1a1a1a; border-bottom-color: #b08d57; }
+.tab:not(.active):hover { color: #777; }
+
+/* ── Brand visibility ─────────────────────────────────────────────────────── */
+
+body.brand-rolex     .breitling-only { display: none !important; }
+body.brand-breitling .rolex-only     { display: none !important; }
+
+/* ── Search ───────────────────────────────────────────────────────────────── */
 
 .search {
   display: flex;
@@ -67,6 +90,8 @@ h1 {
 
 .status.error { color: #c0392b; }
 
+/* ── Variant picker ───────────────────────────────────────────────────────── */
+
 .variants {
   margin-top: 16px;
   display: grid;
@@ -76,14 +101,6 @@ h1 {
 .variants.hidden, .detail.hidden, .progress.hidden {
   display: none;
 }
-
-#opt360Group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#opt360Group.hidden { display: none; }
 
 .variant-card {
   border: 1px solid #ddd;
@@ -97,6 +114,10 @@ h1 {
   gap: 12px;
 }
 
+.variant-card:hover { border-color: #b08d57; }
+.variant-card .vtitle { font-weight: 600; }
+.variant-card .vrmc   { color: #999; font-size: 13px; font-family: monospace; }
+
 .vthumb {
   width: 56px;
   height: 56px;
@@ -104,10 +125,7 @@ h1 {
   flex-shrink: 0;
 }
 
-.variant-card:hover { border-color: #b08d57; }
-
-.variant-card .vtitle { font-weight: 600; }
-.variant-card .vrmc { color: #999; font-size: 13px; margin-top: 2px; font-family: monospace; }
+/* ── Detail layout ────────────────────────────────────────────────────────── */
 
 .detail {
   margin-top: 28px;
@@ -120,6 +138,8 @@ h1 {
   grid-template-columns: 220px 1fr;
   gap: 24px;
 }
+
+/* ── Rolex images ─────────────────────────────────────────────────────────── */
 
 .preview-col {
   display: flex;
@@ -138,9 +158,7 @@ h1 {
   transition: border-color 0.15s;
 }
 
-.preview:hover {
-  border-color: #b08d57;
-}
+.preview:hover { border-color: #b08d57; }
 
 .thumbs {
   display: grid;
@@ -159,9 +177,7 @@ h1 {
   transition: border-color 0.15s;
 }
 
-.thumb:hover {
-  border-color: #b08d57;
-}
+.thumb:hover { border-color: #b08d57; }
 
 .hint {
   margin: 0;
@@ -170,14 +186,112 @@ h1 {
   text-align: center;
 }
 
+/* ── Breitling images ─────────────────────────────────────────────────────── */
+
+.breitling-images {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  align-content: start;
+}
+
+.breitling-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  cursor: context-menu;
+}
+
+.breitling-hint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* ── Detail info column ───────────────────────────────────────────────────── */
+
 .title-row {
   display: flex;
   align-items: baseline;
   gap: 10px;
   margin-bottom: 16px;
 }
+
 .title-row h2 { margin: 0; font-size: 20px; }
 .title-row p  { margin: 0; color: #777; font-size: 20px; }
+
+/* ── Rolex download options ───────────────────────────────────────────────── */
+
+.options-hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#opt360Group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#opt360Group.hidden { display: none; }
+
+#downloadBtn {
+  padding: 12px 24px;
+  font-size: 15px;
+  border: none;
+  border-radius: 6px;
+  background: #b08d57;
+  color: #111;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#downloadBtn:hover    { background: #c4a06b; }
+#downloadBtn:disabled { background: #ddd; color: #999; cursor: not-allowed; }
+
+.progress { margin-top: 14px; }
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #b08d57;
+  transition: width 0.2s;
+}
+
+.progress-label {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #777;
+}
+
+/* ── Specs panel ──────────────────────────────────────────────────────────── */
 
 .specs {
   margin: 18px 0 0;
@@ -189,7 +303,7 @@ h1 {
 
 .specs.hidden { display: none; }
 
-.specs-section { margin-bottom: 14px; }
+.specs-section          { margin-bottom: 14px; }
 .specs-section:last-child { margin-bottom: 0; }
 
 .specs-heading {
@@ -213,69 +327,10 @@ h1 {
 .specs-label { color: #999; white-space: nowrap; }
 .specs-val   { color: #1a1a1a; }
 
-
-.options-hint {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: #999;
-}
-
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-
-#downloadBtn {
-  padding: 12px 24px;
-  font-size: 15px;
-  border: none;
-  border-radius: 6px;
-  background: #b08d57;
-  color: #111;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-#downloadBtn:hover { background: #c4a06b; }
-#downloadBtn:disabled { background: #ddd; color: #999; cursor: not-allowed; }
-
-.progress {
-  margin-top: 14px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: #eee;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  background: #b08d57;
-  transition: width 0.2s;
-}
-
-.progress-label {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #777;
-}
+/* ── Responsive ───────────────────────────────────────────────────────────── */
 
 @media (max-width: 520px) {
-  .detail-grid { grid-template-columns: 1fr; }
-  .preview-col { max-width: 240px; margin: 0 auto; }
+  .detail-grid    { grid-template-columns: 1fr; }
+  .preview-col    { max-width: 240px; margin: 0 auto; }
+  .breitling-images { grid-template-columns: repeat(2, 1fr); }
 }
