@@ -4,7 +4,7 @@ Pure static site (HTML/CSS/JS, no build step, no backend). Supports multiple
 watch brands via tabs. User searches by reference/SKU, picks a variant, and
 downloads catalog photos as a ZIP (or individually by clicking an image).
 
-Currently supported brands: **Rolex**, **Breitling**, **Tudor**.
+Currently supported brands: **Rolex**, **Breitling**, **Tudor**, **Omega**.
 
 ## Files
 
@@ -23,6 +23,10 @@ Currently supported brands: **Rolex**, **Breitling**, **Tudor**.
   by scraping Breitling's sitemap + API directly (no intermediate CSV)
 - `scripts/build_tudor.py` — regenerates `data/tudor_catalog.json` by
   scraping tudorwatch.com product pages (requires `playwright-stealth`)
+- `data/omega_catalog.json` — Omega lookup table: ref (14-digit) -> product
+  (`ref`, `sku`, `name`, `collection`, `images`, `specs`)
+- `scripts/build_omega.py` — regenerates `data/omega_catalog.json` by
+  scraping omegawatches.com product pages (requires `playwright-stealth`)
 
 ## UI architecture
 
@@ -66,6 +70,21 @@ re-check those against a live page.
 Image URLs are stored directly in `breitling_catalog.json` (fetched at build
 time). The browser loads them as plain `<img src>` — no fetch/ZIP for
 Breitling, users right-click to save individually.
+
+### Omega
+Image URLs are stored in `omega_catalog.json` (fetched at build time) and
+loaded as plain `<img src>` — no ZIP download. Omega's Akamai CDN blocks
+cross-origin `fetch()` and also blocks programmatic HTTP requests
+(`context.request`), so full `page.goto()` is required for the build script.
+
+- Images are on `www.omegawatches.com/media/catalog/product/o/m/{filename}`
+- Filenames include the 14-digit ref and a content hash (e.g. `-3ccf4a.png`)
+  and cannot be predicted — must be extracted from the page HTML
+- Image types: main, `watch-wrist`, `portrait-1` through `portrait-N`, `head-watch`
+- Specs come from the "Technical Data" collapsible tab on the product page;
+  the build script removes the cookie banner and clicks the tab via JS
+- `build_omega.py` needs `playwright-stealth`; supports resume
+- Collections: Speedmaster, Seamaster, De Ville, Constellation
 
 ### Tudor
 Images come from `media.tudorwatch.com` (Cloudinary), which sends
@@ -119,6 +138,18 @@ Tudor's site blocks plain Playwright — `playwright-stealth` is required.
 The script supports resume: re-running skips already-fetched entries.
 If you add new fields to the catalog schema, delete `tudor_catalog.json`
 first to force a full re-fetch.
+
+### Omega (one step, needs playwright-stealth)
+
+```bash
+# Discovers all collections, scrapes each product page for images + specs
+python3 scripts/build_omega.py          # run from web/, outputs data/omega_catalog.json
+```
+
+Omega's site blocks both plain Playwright AND `context.request` — must use
+full `page.goto()` (slower than Tudor). `playwright-stealth` is required.
+Concurrency is set to 4 to reduce Akamai HTTP2 errors. Supports resume.
+If many HTTP2 errors occur mid-run, just re-run — resume will fill the gaps.
 
 ## Local dev
 
