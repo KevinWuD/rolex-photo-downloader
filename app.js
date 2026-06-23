@@ -1,7 +1,12 @@
 // ── CDN / URL helpers ────────────────────────────────────────────────────────
 
+// Rolex
 const CDN_BASE    = 'https://media.rolex.com/image/upload';
 const HASH        = 'a677b2c664f6';
+
+// Tudor
+const TUDOR_CDN  = 'https://media.tudorwatch.com/image/upload';
+const TUDOR_HASH = '0yi5ee8b69yh3';
 const STATIC_WIDTH = 2400;
 const FRAME_WIDTH  = 1200;
 const THUMB_WIDTH  = 300;
@@ -13,6 +18,20 @@ const ANGLES = {
   bezel:         'bezel-constant-size-with-shadow/{rmc}',
   dial:          'raw-dial-constant-size-with-shadow/{rmc}',
 };
+
+function tudorUrl(ref, angle, quality) {
+  const path = `v1/catalogue/${TUDOR_HASH}/${angle}/tudor-${ref}`;
+  if (quality === 'web') return `${TUDOR_CDN}/q_auto:best/f_jpg/c_limit,w_2400/${path}`;
+  return `${TUDOR_CDN}/${path}`;
+}
+function tudorThumbUrl(ref, angle) {
+  return `${TUDOR_CDN}/q_auto:best/f_jpg/c_limit,w_300/v1/catalogue/${TUDOR_HASH}/${angle}/tudor-${ref}`;
+}
+function tudorExtraUrl(path, quality) {
+  if (quality === 'web') return `${TUDOR_CDN}/q_auto:best/f_jpg/c_limit,w_2400/v1/${path}`;
+  if (quality === 'thumb') return `${TUDOR_CDN}/q_auto:best/f_jpg/c_limit,w_300/v1/${path}`;
+  return `${TUDOR_CDN}/v1/${path}`;
+}
 
 function thumbUrl(path) {
   return `${CDN_BASE}/q_auto:best/f_jpg/c_limit,w_${THUMB_WIDTH}/v1/${HASH}/catalogue/2026/${path}`;
@@ -28,7 +47,7 @@ function frameUrl(path) {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let brand    = 'rolex';
-let catalogs = { rolex: null, breitling: null };
+let catalogs = { rolex: null, breitling: null, tudor: null };
 let current  = null;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -49,7 +68,13 @@ const els = {
   progress:      document.getElementById('progress'),
   progressFill:  document.getElementById('progressFill'),
   progressLabel: document.getElementById('progressLabel'),
-  breitlingImages: document.getElementById('breitlingImages'),
+  breitlingImages:   document.getElementById('breitlingImages'),
+  tudorPreviewImg:   document.getElementById('tudorPreviewImg'),
+  tudorThumbs:       document.getElementById('tudorThumbs'),
+  tudorDownloadBtn:  document.getElementById('tudorDownloadBtn'),
+  tudorProgress:     document.getElementById('tudorProgress'),
+  tudorProgressFill: document.getElementById('tudorProgressFill'),
+  tudorProgressLabel:document.getElementById('tudorProgressLabel'),
 };
 
 // ── Spec config ───────────────────────────────────────────────────────────────
@@ -67,6 +92,20 @@ const ROLEX_SPEC_LABELS = {
   power_reserve:'Power reserve', precision:'Precision', functions:'Functions',
   oscillator:'Oscillator', dial:'Dial', dial_details:'Details',
   bracelet:'Bracelet', bracelet_material:'Material', clasp:'Clasp',
+};
+
+const TUDOR_SPEC_SECTIONS = [
+  { label: 'Movement', keys: ['movement', 'power_reserve'] },
+  { label: 'Case',     keys: ['case', 'waterproofness', 'crystal', 'bezel', 'winding_crown'] },
+  { label: 'Dial',     keys: ['dial'] },
+  { label: 'Bracelet', keys: ['bracelet'] },
+];
+const TUDOR_SPEC_LABELS = {
+  movement: 'Type', power_reserve: 'Power reserve',
+  case: 'Case', waterproofness: 'Water resistance', crystal: 'Crystal',
+  bezel: 'Bezel', winding_crown: 'Crown',
+  dial: 'Dial',
+  bracelet: 'Bracelet',
 };
 
 const BREITLING_SPEC_SECTIONS = [
@@ -94,7 +133,7 @@ async function switchBrand(b) {
   brand = b;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.brand === b));
   document.body.className = `brand-${b}`;
-  els.input.placeholder = b === 'rolex' ? 'e.g. 124060' : 'e.g. EB01381A1B1X1';
+  els.input.placeholder = 'Search by ref# or collection';
   resetSearch();
   await loadCatalog(b);
   els.status.textContent = `Ready — ${brandTotal(b)} watches loaded.`;
@@ -113,7 +152,9 @@ function resetSearch() {
 
 async function loadCatalog(b) {
   if (catalogs[b]) return;
-  const file = b === 'rolex' ? 'data/rolex_catalog.json' : 'data/breitling_catalog.json';
+  const file = b === 'rolex' ? 'data/rolex_catalog.json'
+    : b === 'breitling' ? 'data/breitling_catalog.json'
+    : 'data/tudor_catalog.json';
   const res  = await fetch(file);
   catalogs[b] = await res.json();
 }
@@ -121,7 +162,7 @@ async function loadCatalog(b) {
 function brandTotal(b) {
   if (!catalogs[b]) return 0;
   if (b === 'rolex') return Object.values(catalogs.rolex).reduce((s, l) => s + l.length, 0);
-  return Object.keys(catalogs.breitling).length;
+  return Object.keys(catalogs[b]).length;
 }
 
 function normalizeRef(raw) {
@@ -141,31 +182,50 @@ function onSearch(e) {
   if (!q) return;
 
   if (brand === 'rolex') searchRolex(q);
-  else searchBreitling(q);
+  else if (brand === 'breitling') searchBreitling(q);
+  else searchTudor(q);
 }
 
 function searchRolex(q) {
+  // Try exact ref lookup first
   const list = catalogs.rolex[q];
-  if (!list) {
+  if (list) {
+    if (list.length === 1) { els.status.textContent = ''; selectRolexVariant(list[0]); return; }
+    els.status.textContent = `${list.length} variants — pick one:`;
+    showPicker(list, selectRolexVariant, rolexPickerCard);
+    return;
+  }
+  // Fall back to family name search
+  const qn = q.replace(/\s+/g, '');
+  const matches = Object.values(catalogs.rolex).flat().filter(v =>
+    v.family.toUpperCase().replace(/\s+/g, '').includes(qn) ||
+    v.rmc.toUpperCase().replace(/\s+/g, '').includes(qn)
+  );
+  if (!matches.length) {
     els.status.textContent = `No match for "${q}".`;
     els.status.classList.add('error');
     return;
   }
-  if (list.length === 1) { els.status.textContent = ''; selectRolexVariant(list[0]); return; }
-  els.status.textContent = `${list.length} variants — pick one:`;
-  showPicker(list, selectRolexVariant, v => `
+  if (matches.length === 1) { els.status.textContent = ''; selectRolexVariant(matches[0]); return; }
+  els.status.textContent = `${matches.length} variants — pick one:`;
+  showPicker(matches, selectRolexVariant, rolexPickerCard);
+}
+
+function rolexPickerCard(v) {
+  return `
     <img class="vthumb" src="${thumbUrl(`upright-c/${v.rmc}`)}" alt="${v.rmc}" />
     <span class="vtitle">${v.family}</span>
     <span class="vrmc">${v.rmc}</span>
-  `);
+  `;
 }
 
 function searchBreitling(q) {
+  const qn = q.replace(/\s+/g, '');
   const all = Object.values(catalogs.breitling);
   const matches = all.filter(p =>
-    p.sku.includes(q) ||
-    p.collection.toUpperCase().includes(q) ||
-    p.name.toUpperCase().includes(q)
+    p.sku.replace(/\s+/g, '').includes(qn) ||
+    p.collection.toUpperCase().replace(/\s+/g, '').includes(qn) ||
+    p.name.toUpperCase().replace(/\s+/g, '').includes(qn)
   );
   if (!matches.length) {
     els.status.textContent = `No match for "${q}".`;
@@ -250,6 +310,146 @@ function selectBreitlingProduct(p) {
   }
 
   renderSpecs(p.specs, BREITLING_SPEC_SECTIONS, BREITLING_SPEC_LABELS);
+}
+
+// ── Tudor search + detail + download ─────────────────────────────────────────
+
+function searchTudor(q) {
+  const qn = q.replace(/\s+/g, '');
+  const all = Object.values(catalogs.tudor);
+  const matches = all.filter(p =>
+    p.ref.toUpperCase().replace(/\s+/g, '').includes(qn) ||
+    p.collection.toUpperCase().replace(/\s+/g, '').includes(qn) ||
+    p.name.toUpperCase().replace(/\s+/g, '').includes(qn)
+  );
+  if (!matches.length) {
+    els.status.textContent = `No match for "${q}".`;
+    els.status.classList.add('error');
+    return;
+  }
+  if (matches.length === 1) { els.status.textContent = ''; selectTudorWatch(matches[0]); return; }
+  els.status.textContent = `${matches.length} results — pick one:`;
+  showPicker(matches, selectTudorWatch, p => `
+    <img class="vthumb" src="${tudorThumbUrl(p.ref, p.angles[0])}" alt="${p.ref}" />
+    <span class="vtitle">${p.collection}</span>
+    <span class="vrmc">${p.ref}</span>
+  `);
+}
+
+function selectTudorWatch(watch) {
+  current = watch;
+  els.detail.classList.remove('hidden');
+  els.detailTitle.textContent = watch.collection;
+  els.detailCase.textContent  = watch.ref;
+
+  const [mainAngle, ...restAngles] = watch.angles;
+  els.tudorPreviewImg.src    = tudorThumbUrl(watch.ref, mainAngle);
+  els.tudorPreviewImg.title  = `${mainAngle} — click to download`;
+  els.tudorPreviewImg.onclick = () => downloadTudorSingle(watch, mainAngle);
+
+  els.tudorThumbs.innerHTML = '';
+  for (const angle of restAngles) {
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.src   = tudorThumbUrl(watch.ref, angle);
+    img.alt   = angle;
+    img.title = `${angle} — click to download`;
+    img.addEventListener('click', () => downloadTudorSingle(watch, angle));
+    els.tudorThumbs.appendChild(img);
+  }
+  for (const path of (watch.extras || [])) {
+    const label = path.split('/').at(-2); // wrist / beautyshots / ambiance
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.src   = tudorExtraUrl(path, 'thumb');
+    img.alt   = label;
+    img.title = `${label} — click to download`;
+    img.addEventListener('click', () => downloadTudorExtra(watch, path, label));
+    els.tudorThumbs.appendChild(img);
+  }
+
+  resetTudorProgress();
+  renderSpecs(watch.specs, TUDOR_SPEC_SECTIONS, TUDOR_SPEC_LABELS);
+}
+
+function resetTudorProgress() {
+  els.tudorProgress.classList.add('hidden');
+  els.tudorProgressFill.style.width = '0%';
+  els.tudorProgressLabel.textContent = '';
+  els.tudorDownloadBtn.disabled = false;
+  els.tudorDownloadBtn.textContent = 'Download ZIP';
+}
+
+async function downloadTudorSingle(watch, angle) {
+  try {
+    const res = await fetch(tudorUrl(watch.ref, angle, 'web'));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    saveAs(await res.blob(), `${watch.ref}_${angle}.jpg`);
+  } catch (err) {
+    els.status.textContent = `Failed: ${err.message}`;
+    els.status.classList.add('error');
+  }
+}
+
+async function downloadTudorExtra(watch, path, label) {
+  try {
+    const res = await fetch(tudorExtraUrl(path, 'web'));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    saveAs(await res.blob(), `${watch.ref}_${label}.jpg`);
+  } catch (err) {
+    els.status.textContent = `Failed: ${err.message}`;
+    els.status.classList.add('error');
+  }
+}
+
+function buildTudorJobs(watch) {
+  const jobs = [];
+  if (document.getElementById('tudorOptWeb').checked) {
+    for (const angle of watch.angles)
+      jobs.push({ url: tudorUrl(watch.ref, angle, 'web'), zipPath: `web/${angle}.jpg` });
+    for (const path of (watch.extras || [])) {
+      const label = path.split('/').at(-2);
+      jobs.push({ url: tudorExtraUrl(path, 'web'), zipPath: `web/${label}.jpg` });
+    }
+  }
+  if (document.getElementById('tudorOptOrig').checked) {
+    for (const angle of watch.angles)
+      jobs.push({ url: tudorUrl(watch.ref, angle, 'original'), zipPath: `original/${angle}.png` });
+    for (const path of (watch.extras || [])) {
+      const label = path.split('/').at(-2);
+      jobs.push({ url: tudorExtraUrl(path, 'original'), zipPath: `original/${label}.png` });
+    }
+  }
+  return jobs;
+}
+
+async function onTudorDownload() {
+  if (!current || brand !== 'tudor') return;
+  const jobs = buildTudorJobs(current);
+  if (!jobs.length) {
+    els.status.textContent = 'Select at least one option.';
+    els.status.classList.add('error');
+    return;
+  }
+  els.tudorDownloadBtn.disabled = true;
+  els.tudorDownloadBtn.textContent = 'Downloading…';
+  els.tudorProgress.classList.remove('hidden');
+  els.tudorProgressLabel.textContent = `0 / ${jobs.length}`;
+
+  const results = await fetchWithLimit(jobs, 8, (done, total) => {
+    els.tudorProgressFill.style.width = `${Math.round((done / total) * 100)}%`;
+    els.tudorProgressLabel.textContent = `${done} / ${total}`;
+  });
+
+  els.tudorDownloadBtn.textContent = 'Zipping…';
+  const zip = new JSZip();
+  let failed = 0;
+  for (const r of results) r.blob ? zip.file(r.zipPath, r.blob) : failed++;
+
+  saveAs(await zip.generateAsync({ type: 'blob' }), `${current.ref}.zip`);
+  els.tudorDownloadBtn.disabled = false;
+  els.tudorDownloadBtn.textContent = 'Download ZIP';
+  els.tudorProgressLabel.textContent = failed ? `Done — ${failed} file(s) failed.` : 'Done.';
 }
 
 // ── Specs ─────────────────────────────────────────────────────────────────────
@@ -376,6 +576,7 @@ async function onDownload() {
 
 els.form.addEventListener('submit', onSearch);
 els.downloadBtn.addEventListener('click', onDownload);
+els.tudorDownloadBtn.addEventListener('click', onTudorDownload);
 
 loadCatalog('rolex').then(() => {
   els.status.textContent = `Ready — ${brandTotal('rolex')} watches loaded.`;

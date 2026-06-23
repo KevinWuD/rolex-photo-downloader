@@ -4,7 +4,7 @@ Pure static site (HTML/CSS/JS, no build step, no backend). Supports multiple
 watch brands via tabs. User searches by reference/SKU, picks a variant, and
 downloads catalog photos as a ZIP (or individually by clicking an image).
 
-Currently supported brands: **Rolex**, **Breitling**.
+Currently supported brands: **Rolex**, **Breitling**, **Tudor**.
 
 ## Files
 
@@ -15,10 +15,14 @@ Currently supported brands: **Rolex**, **Breitling**.
   variants (`rmc`, `case_id`, `bracelet_id`, `has360`, `n360`, `specs`, etc.)
 - `data/breitling_catalog.json` — Breitling lookup table: SKU -> product
   (`sku`, `name`, `collection`, `images`, `specs`)
+- `data/tudor_catalog.json` — Tudor lookup table: ref -> product
+  (`ref`, `name`, `collection`, `collection_slug`, `angles`, `specs`)
 - `scripts/build_data.py` — regenerates `data/rolex_catalog.json` from
   `../rolex_catalog.csv` (one level up, in `RolexMSRP/`)
 - `scripts/build_breitling.py` — regenerates `data/breitling_catalog.json`
   by scraping Breitling's sitemap + API directly (no intermediate CSV)
+- `scripts/build_tudor.py` — regenerates `data/tudor_catalog.json` by
+  scraping tudorwatch.com product pages (requires `playwright-stealth`)
 
 ## UI architecture
 
@@ -56,6 +60,18 @@ Image URLs are stored directly in `breitling_catalog.json` (fetched at build
 time). The browser loads them as plain `<img src>` — no fetch/ZIP for
 Breitling, users right-click to save individually.
 
+### Tudor
+Images come from `media.tudorwatch.com` (Cloudinary), which sends
+`Access-Control-Allow-Origin: *`, so ZIP download works just like Rolex.
+
+- CDN base: `https://media.tudorwatch.com/image/upload`
+- Hash (Cloudinary folder): `0yi5ee8b69yh3` (hardcoded — update if 404s appear)
+- URL pattern: `v1/catalogue/{HASH}/{angle}/tudor-{ref}`
+- Web quality: add `q_auto:best/f_jpg/c_limit,w_2400/` transform prefix
+- Angles per watch are stored in `tudor_catalog.json` (`angles` array);
+  typically 3: `upright-cb-with-drop-shadow`, `bracelet-c`, `upright-ob`
+- RMC format: `tudor-` prefix + ref (e.g., `tudor-m7939a1a0ru-0001`)
+
 ## Updating the catalog
 
 Both build scripts support **resume**: if interrupted, re-running skips already
@@ -78,6 +94,16 @@ python3 scripts/build_data.py           # run from web/, outputs data/rolex_cata
 # Fetches SKUs from sitemap, calls Breitling API, writes JSON directly
 python3 scripts/build_breitling.py      # run from web/, outputs data/breitling_catalog.json
 ```
+
+### Tudor (one step, needs playwright-stealth)
+
+```bash
+# Discovers all collections, scrapes each product page for images + specs
+python3 scripts/build_tudor.py          # run from web/, outputs data/tudor_catalog.json
+```
+
+Tudor's site blocks plain Playwright — `playwright-stealth` is required.
+The script supports resume: re-running skips already-fetched entries.
 
 ## Local dev
 

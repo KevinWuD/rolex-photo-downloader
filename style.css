@@ -43,7 +43,11 @@ body {
 /* ── Brand visibility ─────────────────────────────────────────────────────── */
 
 body.brand-rolex     .breitling-only { display: none !important; }
+body.brand-rolex     .tudor-only     { display: none !important; }
 body.brand-breitling .rolex-only     { display: none !important; }
+body.brand-breitling .tudor-only     { display: none !important; }
+body.brand-tudor     .rolex-only     { display: none !important; }
+body.brand-tudor     .breitling-only { display: none !important; }
 
 /* ── Search ───────────────────────────────────────────────────────────────── */
 
@@ -60,7 +64,6 @@ body.brand-breitling .rolex-only     { display: none !important; }
   border-radius: 6px;
   background: #fff;
   color: #1a1a1a;
-  text-transform: uppercase;
 }
 
 .search input:focus {
@@ -105,13 +108,14 @@ body.brand-breitling .rolex-only     { display: none !important; }
 .variant-card {
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 0 14px 0 0;
   cursor: pointer;
   background: #fafafa;
   transition: border-color 0.15s;
   display: flex;
   align-items: center;
   gap: 12px;
+  overflow: hidden;
 }
 
 .variant-card:hover { border-color: #b08d57; }
@@ -119,8 +123,8 @@ body.brand-breitling .rolex-only     { display: none !important; }
 .variant-card .vrmc   { color: #999; font-size: 13px; font-family: monospace; }
 
 .vthumb {
-  width: 56px;
-  height: 56px;
+  height: 64px;
+  width: auto;
   object-fit: contain;
   flex-shrink: 0;
 }

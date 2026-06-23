@@ -12,13 +12,14 @@
       <div class="tab-bar">
         <button class="tab active" data-brand="rolex">Rolex</button>
         <button class="tab" data-brand="breitling">Breitling</button>
+        <button class="tab" data-brand="tudor">Tudor</button>
       </div>
 
       <form id="searchForm" class="search">
         <input
           id="refInput"
           type="text"
-          placeholder="e.g. 124060"
+          placeholder="Search by ref# or collection"
           autocomplete="off"
           spellcheck="false"
         />
@@ -41,6 +42,13 @@
 
           <!-- Breitling: image grid -->
           <div id="breitlingImages" class="breitling-images breitling-only"></div>
+
+          <!-- Tudor: single preview + thumbs -->
+          <div class="preview-col tudor-only">
+            <img id="tudorPreviewImg" class="preview" alt="preview" />
+            <div id="tudorThumbs" class="thumbs"></div>
+            <p class="hint">Click an image to download it individually.</p>
+          </div>
 
           <div class="detail-info">
             <div class="title-row">
@@ -70,6 +78,22 @@
 
             <!-- Breitling: right-click hint -->
             <p class="breitling-only breitling-hint">Right-click any image to save.</p>
+
+            <!-- Tudor: download options -->
+            <div class="tudor-only">
+              <p class="options-hint">Check all that apply then click download</p>
+              <div class="options">
+                <label class="option"><input type="checkbox" id="tudorOptWeb" checked /> Images — JPG</label>
+                <label class="option"><input type="checkbox" id="tudorOptOrig" /> Images — Original PNG</label>
+              </div>
+              <button id="tudorDownloadBtn" type="button">Download ZIP</button>
+              <div id="tudorProgress" class="progress hidden">
+                <div class="progress-bar">
+                  <div id="tudorProgressFill" class="progress-fill"></div>
+                </div>
+                <div id="tudorProgressLabel" class="progress-label"></div>
+              </div>
+            </div>
 
             <div id="specs" class="specs hidden"></div>
           </div>
