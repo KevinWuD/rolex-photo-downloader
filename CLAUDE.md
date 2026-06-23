@@ -16,7 +16,7 @@ Currently supported brands: **Rolex**, **Breitling**, **Tudor**.
 - `data/breitling_catalog.json` — Breitling lookup table: SKU -> product
   (`sku`, `name`, `collection`, `images`, `specs`)
 - `data/tudor_catalog.json` — Tudor lookup table: ref -> product
-  (`ref`, `name`, `collection`, `collection_slug`, `angles`, `specs`)
+  (`ref`, `name`, `collection`, `collection_slug`, `angles`, `extras`, `specs`)
 - `scripts/build_data.py` — regenerates `data/rolex_catalog.json` from
   `../rolex_catalog.csv` (one level up, in `RolexMSRP/`)
 - `scripts/build_breitling.py` — regenerates `data/breitling_catalog.json`
@@ -35,6 +35,13 @@ Brand switching uses a CSS visibility pattern — no JS show/hide per element:
 When adding a new brand: add a tab in `index.html`, a `.brand-X-only` CSS
 rule in `style.css`, and handle the search/detail flow in `app.js` following
 the same pattern.
+
+## Search
+
+All brands support searching by **ref number** and **collection/family name**.
+Input is normalized (uppercased, spaces stripped) before matching, so
+"Black Bay 58", "black bay 58", and "BLACKBAY58" all find the same results.
+Rolex falls back to name search if the exact ref key isn't found.
 
 ## How images are fetched
 
@@ -66,11 +73,17 @@ Images come from `media.tudorwatch.com` (Cloudinary), which sends
 
 - CDN base: `https://media.tudorwatch.com/image/upload`
 - Hash (Cloudinary folder): `0yi5ee8b69yh3` (hardcoded — update if 404s appear)
-- URL pattern: `v1/catalogue/{HASH}/{angle}/tudor-{ref}`
-- Web quality: add `q_auto:best/f_jpg/c_limit,w_2400/` transform prefix
-- Angles per watch are stored in `tudor_catalog.json` (`angles` array);
-  typically 3: `upright-cb-with-drop-shadow`, `bracelet-c`, `upright-ob`
-- RMC format: `tudor-` prefix + ref (e.g., `tudor-m7939a1a0ru-0001`)
+- **Catalogue angles** (always 3, stored in `angles` array):
+  - URL: `v1/catalogue/{HASH}/{angle}/tudor-{ref}`
+  - Typical angles: `upright-cb-with-drop-shadow`, `bracelet-c`, `upright-ob`
+  - RMC format: `tudor-` prefix + ref (e.g., `tudor-m7939a1a0ru-0001`)
+- **Extra images** (optional, ~half of watches, stored in `extras` array):
+  - URL: `v1/{path}` where path is e.g. `tudorwatch/model-assets/wrist/tudor-{ref}`
+  - Types: `wrist`, `beautyshots`, `ambiance`
+- Web quality prefix: `q_auto:best/f_jpg/c_limit,w_2400/`
+- Tudor's site has no catalog API — images are server-rendered into HTML.
+  `build_tudor.py` uses `playwright-stealth` + `context.request` (fast HTTP,
+  no JS rendering) to scrape pages concurrently after a one-time warmup.
 
 ## Updating the catalog
 
@@ -104,6 +117,8 @@ python3 scripts/build_tudor.py          # run from web/, outputs data/tudor_cata
 
 Tudor's site blocks plain Playwright — `playwright-stealth` is required.
 The script supports resume: re-running skips already-fetched entries.
+If you add new fields to the catalog schema, delete `tudor_catalog.json`
+first to force a full re-fetch.
 
 ## Local dev
 
