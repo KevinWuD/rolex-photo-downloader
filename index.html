@@ -13,13 +13,14 @@
         <button class="tab active" data-brand="rolex">Rolex</button>
         <button class="tab" data-brand="breitling">Breitling</button>
         <button class="tab" data-brand="tudor">Tudor</button>
+        <button class="tab" data-brand="omega">Omega</button>
       </div>
 
       <form id="searchForm" class="search">
         <input
           id="refInput"
           type="text"
-          placeholder="Search by ref# or collection"
+          placeholder="Search by reference number or model name"
           autocomplete="off"
           spellcheck="false"
         />
@@ -42,6 +43,9 @@
 
           <!-- Breitling: image grid -->
           <div id="breitlingImages" class="breitling-images breitling-only"></div>
+
+          <!-- Omega: image grid -->
+          <div id="omegaImages" class="breitling-images omega-only"></div>
 
           <!-- Tudor: single preview + thumbs -->
           <div class="preview-col tudor-only">
@@ -78,6 +82,9 @@
 
             <!-- Breitling: right-click hint -->
             <p class="breitling-only breitling-hint">Right-click any image to save.</p>
+
+            <!-- Omega: right-click hint -->
+            <p class="omega-only breitling-hint">Right-click any image to save.</p>
 
             <!-- Tudor: download options -->
             <div class="tudor-only">

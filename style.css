@@ -44,10 +44,16 @@ body {
 
 body.brand-rolex     .breitling-only { display: none !important; }
 body.brand-rolex     .tudor-only     { display: none !important; }
+body.brand-rolex     .omega-only     { display: none !important; }
 body.brand-breitling .rolex-only     { display: none !important; }
 body.brand-breitling .tudor-only     { display: none !important; }
+body.brand-breitling .omega-only     { display: none !important; }
 body.brand-tudor     .rolex-only     { display: none !important; }
 body.brand-tudor     .breitling-only { display: none !important; }
+body.brand-tudor     .omega-only     { display: none !important; }
+body.brand-omega     .rolex-only     { display: none !important; }
+body.brand-omega     .breitling-only { display: none !important; }
+body.brand-omega     .tudor-only     { display: none !important; }
 
 /* ── Search ───────────────────────────────────────────────────────────────── */
 

@@ -47,7 +47,7 @@ function frameUrl(path) {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let brand    = 'rolex';
-let catalogs = { rolex: null, breitling: null, tudor: null };
+let catalogs = { rolex: null, breitling: null, tudor: null, omega: null };
 let current  = null;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -69,6 +69,7 @@ const els = {
   progressFill:  document.getElementById('progressFill'),
   progressLabel: document.getElementById('progressLabel'),
   breitlingImages:   document.getElementById('breitlingImages'),
+  omegaImages:       document.getElementById('omegaImages'),
   tudorPreviewImg:   document.getElementById('tudorPreviewImg'),
   tudorThumbs:       document.getElementById('tudorThumbs'),
   tudorDownloadBtn:  document.getElementById('tudorDownloadBtn'),
@@ -92,6 +93,21 @@ const ROLEX_SPEC_LABELS = {
   power_reserve:'Power reserve', precision:'Precision', functions:'Functions',
   oscillator:'Oscillator', dial:'Dial', dial_details:'Details',
   bracelet:'Bracelet', bracelet_material:'Material', clasp:'Clasp',
+};
+
+const OMEGA_SPEC_SECTIONS = [
+  { label: 'Movement', keys: ['caliber','movement_type','power_reserve'] },
+  { label: 'Case',     keys: ['reference','case_diameter','thickness','between_lugs','lug_to_lug','case','water_resistance','crystal','total_product_weight_(approx.)'] },
+  { label: 'Dial',     keys: ['dial_color'] },
+  { label: 'Bracelet', keys: ['bracelet','clasp'] },
+];
+const OMEGA_SPEC_LABELS = {
+  caliber:'Calibre', movement_type:'Type', power_reserve:'Power reserve',
+  reference:'Reference', case_diameter:'Diameter', thickness:'Thickness',
+  between_lugs:'Between lugs', lug_to_lug:'Lug-to-lug', case:'Case material',
+  water_resistance:'Water resistance', crystal:'Crystal',
+  'total_product_weight_(approx.)':'Weight',
+  dial_color:'Dial color', bracelet:'Bracelet', clasp:'Clasp',
 };
 
 const TUDOR_SPEC_SECTIONS = [
@@ -133,7 +149,7 @@ async function switchBrand(b) {
   brand = b;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.brand === b));
   document.body.className = `brand-${b}`;
-  els.input.placeholder = 'Search by ref# or collection';
+  els.input.placeholder = 'Search by reference number or model name';
   resetSearch();
   await loadCatalog(b);
   els.status.textContent = `Ready — ${brandTotal(b)} watches loaded.`;
@@ -154,7 +170,8 @@ async function loadCatalog(b) {
   if (catalogs[b]) return;
   const file = b === 'rolex' ? 'data/rolex_catalog.json'
     : b === 'breitling' ? 'data/breitling_catalog.json'
-    : 'data/tudor_catalog.json';
+    : b === 'tudor' ? 'data/tudor_catalog.json'
+    : 'data/omega_catalog.json';
   const res  = await fetch(file);
   catalogs[b] = await res.json();
 }
@@ -183,7 +200,8 @@ function onSearch(e) {
 
   if (brand === 'rolex') searchRolex(q);
   else if (brand === 'breitling') searchBreitling(q);
-  else searchTudor(q);
+  else if (brand === 'tudor') searchTudor(q);
+  else searchOmega(q);
 }
 
 function searchRolex(q) {
@@ -310,6 +328,50 @@ function selectBreitlingProduct(p) {
   }
 
   renderSpecs(p.specs, BREITLING_SPEC_SECTIONS, BREITLING_SPEC_LABELS);
+}
+
+// ── Omega search + detail ────────────────────────────────────────────────────
+
+function searchOmega(q) {
+  const qn = q.replace(/\s+/g, '').replace(/\./g, '');
+  const all = Object.values(catalogs.omega);
+  const matches = all.filter(p =>
+    p.ref.replace(/\./g, '').includes(qn) ||
+    p.sku.replace(/\./g, '').includes(qn) ||
+    p.collection.toUpperCase().replace(/\s+/g, '').includes(qn) ||
+    p.name.toUpperCase().replace(/[\s.]/g, '').includes(qn)
+  );
+  if (!matches.length) {
+    els.status.textContent = `No match for "${q}".`;
+    els.status.classList.add('error');
+    return;
+  }
+  if (matches.length === 1) { els.status.textContent = ''; selectOmegaProduct(matches[0]); return; }
+  els.status.textContent = `${matches.length} results — pick one:`;
+  showPicker(matches, selectOmegaProduct, p => `
+    <img class="vthumb" src="${(p.images[0] || '').replace('.png', '.png?w=100')}" alt="${p.ref}" />
+    <span class="vtitle">${p.collection}</span>
+    <span class="vrmc">${p.sku}</span>
+  `);
+}
+
+function selectOmegaProduct(p) {
+  current = p;
+  els.detail.classList.remove('hidden');
+  els.detailTitle.textContent = p.collection;
+  els.detailCase.textContent  = p.sku;
+
+  els.omegaImages.innerHTML = '';
+  for (const url of p.images) {
+    const img = document.createElement('img');
+    img.src       = url + '?w=500';
+    img.alt       = p.name;
+    img.title     = p.name;
+    img.className = 'breitling-img';
+    els.omegaImages.appendChild(img);
+  }
+
+  renderSpecs(p.specs, OMEGA_SPEC_SECTIONS, OMEGA_SPEC_LABELS);
 }
 
 // ── Tudor search + detail + download ─────────────────────────────────────────
