@@ -127,7 +127,9 @@ async def fetch_product(context, url):
             rf'catalogue/{CDN_HASH}/([^/"\'\s]+)/tudor-{re.escape(ref)}',
             html
         )
-        angles = list(dict.fromkeys(angle_matches)) or DEFAULT_ANGLES
+        angles = list(dict.fromkeys(angle_matches))
+        if len(angles) < len(DEFAULT_ANGLES):
+            angles = DEFAULT_ANGLES
 
         # Extra images: wrist / beautyshots / ambiance
         extras = []
