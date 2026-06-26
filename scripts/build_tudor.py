@@ -10,6 +10,10 @@ CDN_HASH = '0yi5ee8b69yh3'
 DEFAULT_ANGLES = ['upright-cb-with-drop-shadow', 'bracelet-c', 'upright-ob']
 CONCURRENCY = 8
 
+WATCH_URL_RE = re.compile(
+    r'https://www\.tudorwatch\.com(/en/(?:watches|watch-family)/[^/\s<"]+/m[\w-]+)'
+)
+
 SPEC_SECTIONS = {
     'Case':           'case',
     'Movement':       'movement',
@@ -54,26 +58,38 @@ def parse_specs(text):
     return specs
 
 
-async def get_collections(page):
-    print('Discovering collections...')
-    await page.goto('https://www.tudorwatch.com/en/watches', wait_until='networkidle', timeout=30000)
-    await page.wait_for_timeout(1500)
-    html = await page.content()
-    slugs = list(set(re.findall(r'href="/en/watches/([^/"]+)"', html)))
-    print(f'  {len(slugs)} collections found')
-    return slugs
+async def _fetch_text(page, context, url):
+    """Fetch URL text via context.request; fall back to page.goto on failure."""
+    try:
+        resp = await context.request.get(url, timeout=20000)
+        if resp.status == 200:
+            return await resp.text()
+    except Exception:
+        pass
+    await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+    return await page.content()
 
 
-async def get_products_for_collection(page, slug):
-    resp = await page.goto(f'https://www.tudorwatch.com/en/watches/{slug}',
-                           wait_until='networkidle', timeout=20000)
-    if resp.status != 200:
-        print(f'  {slug}: {resp.status}')
-        return []
-    await page.wait_for_timeout(500)
-    html = await page.content()
-    links = [l for l in re.findall(r'href="(/en/watches/[^"]+)"', html) if l.count('/') == 4]
-    return list(set(links))
+async def get_all_product_urls(page, context):
+    """Discover all English watch product paths via Tudor's sitemap."""
+    print('Loading sitemap index...')
+    content = await _fetch_text(page, context, 'https://www.tudorwatch.com/sitemapindex.xml')
+    sitemap_urls = re.findall(r'<loc>(https://[^<]+\.xml)</loc>', content)
+    print(f'  {len(sitemap_urls)} sub-sitemaps found')
+
+    all_paths = set()
+    for surl in sitemap_urls:
+        try:
+            sub = await _fetch_text(page, context, surl)
+            matches = WATCH_URL_RE.findall(sub)
+            if matches:
+                all_paths.update(matches)
+                print(f'  {surl.split("/")[-1]}: {len(matches)} watch URLs')
+        except Exception as e:
+            print(f'  Error {surl}: {e}')
+
+    print(f'  Total: {len(all_paths)} product URLs')
+    return sorted(all_paths)
 
 
 async def fetch_product(context, url):
@@ -169,16 +185,7 @@ async def main():
         await page.goto('https://www.tudorwatch.com/en', wait_until='domcontentloaded', timeout=30000)
         await page.wait_for_timeout(1500)
 
-        collection_slugs = await get_collections(page)
-
-        all_product_urls = set()
-        for slug in collection_slugs:
-            links = await get_products_for_collection(page, slug)
-            all_product_urls.update(links)
-            if links:
-                print(f'  {slug}: {len(links)} products')
-
-        product_list = sorted(all_product_urls)
+        product_list = await get_all_product_urls(page, context)
         todo = [u for u in product_list if u.rstrip('/').split('/')[-1] not in existing]
         print(f'\nTotal: {len(product_list)} products, {len(todo)} to fetch')
 
